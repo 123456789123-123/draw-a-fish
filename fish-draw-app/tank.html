@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>虚拟鱼缸 - Draw A Fish</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .tank-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(to bottom, 
+                rgba(135, 206, 235, 0.8) 0%,
+                rgba(70, 130, 180, 0.9) 50%,
+                rgba(25, 25, 112, 1) 100%);
+        }
+
+        .tank-glass {
+            position: absolute;
+            top: 50px;
+            left: 50px;
+            right: 50px;
+            bottom: 50px;
+            border: 8px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+            box-shadow: 
+                inset 0 0 50px rgba(255, 255, 255, 0.1),
+                0 0 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .water-surface {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: linear-gradient(90deg, 
+                rgba(255, 255, 255, 0.3) 0%,
+                rgba(135, 206, 235, 0.5) 50%,
+                rgba(255, 255, 255, 0.3) 100%);
+            animation: waterRipple 3s ease-in-out infinite;
+        }
+
+        @keyframes waterRipple {
+            0%, 100% { transform: scaleX(1); }
+            50% { transform: scaleX(1.02); }
+        }
+
+        .bubbles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .bubble {
+            position: absolute;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.2) 100%);
+            border-radius: 50%;
+            animation: bubbleFloat 4s linear infinite;
+        }
+
+        @keyframes bubbleFloat {
+            0% {
+                transform: translateY(100vh) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-10vh) scale(1);
+                opacity: 0;
+            }
+        }
+
+        .fish {
+            position: absolute;
+            transition: all 0.5s ease-in-out;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .fish img {
+            width: 80px;
+            height: 60px;
+            object-fit: contain;
+            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        .fish.swimming {
+            animation: fishSwim 8s linear infinite;
+        }
+
+        @keyframes fishSwim {
+            0% { transform: translateX(-100px) rotateY(0deg); }
+            25% { transform: translateX(calc(100vw - 100px)) rotateY(0deg); }
+            50% { transform: translateX(calc(100vw - 100px)) rotateY(180deg); }
+            75% { transform: translateX(-100px) rotateY(180deg); }
+            100% { transform: translateX(-100px) rotateY(0deg); }
+        }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .fish-info {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        .fish-count {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .fish-list {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .fish-item {
+            padding: 5px 10px;
+            background: rgba(106, 90, 205, 0.2);
+            border-radius: 10px;
+            font-size: 14px;
+            border: 1px solid rgba(106, 90, 205, 0.5);
+        }
+
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px 40px;
+            border-radius: 15px;
+            font-weight: bold;
+            z-index: 200;
+        }
+
+        @media (max-width: 768px) {
+            .tank-glass {
+                top: 30px;
+                left: 20px;
+                right: 20px;
+                bottom: 120px;
+            }
+            
+            .controls {
+                top: 10px;
+                left: 10px;
+                right: 10px;
+            }
+            
+            .control-btn {
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+            
+            .fish img {
+                width: 60px;
+                height: 45px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="tank-container">
+        <div class="tank-glass">
+            <div class="water-surface"></div>
+            <div class="bubbles" id="bubbles"></div>
+            <div id="fishContainer"></div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="control-btn" onclick="loadFish()">加载我的鱼</button>
+        <button class="control-btn" onclick="addRandomFish()">添加随机鱼</button>
+        <button class="control-btn" onclick="clearTank()">清空鱼缸</button>
+        <button class="control-btn" onclick="goHome()">返回画鱼</button>
+    </div>
+
+    <div class="fish-info">
+        <div class="fish-count" id="fishCount">鱼缸中有 0 条鱼</div>
+        <div class="fish-list" id="fishList"></div>
+    </div>
+
+    <div class="loading" id="loading" style="display: none;">
+        正在加载鱼类数据...
+    </div>
+
+    <script>
+        class VirtualTank {
+            constructor() {
+                this.fishes = [];
+                this.fishContainer = document.getElementById('fishContainer');
+                this.fishCount = document.getElementById('fishCount');
+                this.fishList = document.getElementById('fishList');
+                this.loading = document.getElementById('loading');
+                
+                this.init();
+            }
+
+            init() {
+                this.createBubbles();
+                this.loadStoredFish();
+                this.startAnimation();
+                this.handleUrlParams();
+            }
+
+            handleUrlParams() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const capacity = urlParams.get('capacity');
+                if (capacity) {
+                    console.log(`鱼缸容量设置为: ${capacity}`);
+                }
+            }
+
+            createBubbles() {
+                const bubblesContainer = document.getElementById('bubbles');
+                
+                setInterval(() => {
+                    if (bubblesContainer.children.length < 10) {
+                        const bubble = document.createElement('div');
+                        bubble.className = 'bubble';
+                        
+                        const size = Math.random() * 10 + 5;
+                        bubble.style.width = size + 'px';
+                        bubble.style.height = size + 'px';
+                        bubble.style.left = Math.random() * 90 + '%';
+                        bubble.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                        
+                        bubblesContainer.appendChild(bubble);
+                        
+                        setTimeout(() => {
+                            if (bubble.parentNode) {
+                                bubble.parentNode.removeChild(bubble);
+                            }
+                        }, 5000);
+                    }
+                }, 800);
+            }
+
+            async loadStoredFish() {
+                this.loading.style.display = 'block';
+                
+                try {
+                    // 从localStorage加载鱼类数据
+                    const storedFish = localStorage.getItem('drawnFish');
+                    if (storedFish) {
+                        const fishData = JSON.parse(storedFish);
+                        if (Array.isArray(fishData)) {
+                            for (const fish of fishData) {
+                                await this.addFishToTank(fish);
+                            }
+                        } else {
+                            await this.addFishToTank(fishData);
+                        }
+                    }
+                    
+                    // 如果没有存储的鱼，添加一些示例鱼
+                    if (this.fishes.length === 0) {
+                        this.addSampleFish();
+                    }
+                } catch (error) {
+                    console.error('加载鱼类数据失败:', error);
+                    this.addSampleFish();
+                } finally {
+                    this.loading.style.display = 'none';
+                }
+            }
+
+            addSampleFish() {
+                const sampleFish = [
+                    { species: '金鱼', confidence: 95, imageData: null },
+                    { species: '热带鱼', confidence: 88, imageData: null },
+                    { species: '小丑鱼', confidence: 92, imageData: null }
+                ];
+                
+                sampleFish.forEach(fish => this.addFishToTank(fish));
+            }
+
+            async addFishToTank(fishData) {
+                const fishElement = document.createElement('div');
+                fishElement.className = 'fish swimming';
+                
+                // 创建鱼的图像
+                const fishImg = document.createElement('img');
+                
+                if (fishData.imageData) {
+                    fishImg.src = fishData.imageData;
+                } else {
+                    // 使用SVG创建默认鱼形状
+                    fishImg.src = this.createFishSVG(fishData.species);
+                }
+                
+                fishImg.alt = fishData.species;
+                fishElement.appendChild(fishImg);
+                
+                // 随机位置和动画参数
+                const startX = Math.random() * (window.innerWidth - 100);
+                const startY = Math.random() * (window.innerHeight - 200) + 100;
+                const animationDuration = Math.random() * 5 + 5; // 5-10秒
+                
+                fishElement.style.left = startX + 'px';
+                fishElement.style.top = startY + 'px';
+                fishElement.style.animationDuration = animationDuration + 's';
+                fishElement.style.animationDelay = Math.random() * 2 + 's';
+                
+                // 添加点击事件
+                fishElement.addEventListener('click', () => {
+                    this.showFishInfo(fishData);
+                });
+                
+                this.fishContainer.appendChild(fishElement);
+                this.fishes.push({
+                    element: fishElement,
+                    data: fishData
+                });
+                
+                this.updateFishInfo();
+            }
+
+            createFishSVG(species) {
+                const colors = {
+                    '金鱼': '#FFD700',
+                    '热带鱼': '#FF6B6B',
+                    '小丑鱼': '#FF8C00',
+                    '鲤鱼': '#CD853F',
+                    '比目鱼': '#DDA0DD'
+                };
+                
+                const color = colors[species] || '#4ECDC4';
+                
+                const svg = `
+                    <svg width="80" height="60" viewBox="0 0 80 60" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="fishGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:${color};stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:${this.darkenColor(color, 20)};stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <ellipse cx="35" cy="30" rx="25" ry="15" fill="url(#fishGradient)" stroke="#333" stroke-width="1"/>
+                        <polygon points="10,30 25,20 25,40" fill="${color}" stroke="#333" stroke-width="1"/>
+                        <circle cx="45" cy="25" r="3" fill="#000"/>
+                        <circle cx="47" cy="23" r="1" fill="#FFF"/>
+                        <path d="M 35 35 Q 45 40 50 35" stroke="#333" stroke-width="1" fill="none"/>
+                    </svg>
+                `;
+                
+                return 'data:image/svg+xml;base64,' + btoa(svg);
+            }
+
+            darkenColor(color, percent) {
+                const num = parseInt(color.replace("#",""), 16);
+                const amt = Math.round(2.55 * percent);
+                const R = (num >> 16) - amt;
+                const G = (num >> 8 & 0x00FF) - amt;
+                const B = (num & 0x0000FF) - amt;
+                return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+                    (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+                    (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+            }
+
+            showFishInfo(fishData) {
+                alert(`
+                    鱼类信息:
+                    种类: ${fishData.species}
+                    置信度: ${fishData.confidence}%
+                    绘制时间: ${fishData.timestamp ? new Date(fishData.timestamp).toLocaleString() : '未知'}
+                `);
+            }
+
+            updateFishInfo() {
+                this.fishCount.textContent = `鱼缸中有 ${this.fishes.length} 条鱼`;
+                
+                this.fishList.innerHTML = '';
+                this.fishes.forEach(fish => {
+                    const fishItem = document.createElement('div');
+                    fishItem.className = 'fish-item';
+                    fishItem.textContent = `${fish.data.species} (${fish.data.confidence}%)`;
+                    this.fishList.appendChild(fishItem);
+                });
+            }
+
+            startAnimation() {
+                setInterval(() => {
+                    this.fishes.forEach(fish => {
+                        // 随机改变游泳方向和速度
+                        if (Math.random() < 0.1) { // 10%概率改变方向
+                            const newDuration = Math.random() * 5 + 5;
+                            fish.element.style.animationDuration = newDuration + 's';
+                        }
+                    });
+                }, 2000);
+            }
+        }
+
+        // 全局函数
+        function loadFish() {
+            location.reload();
+        }
+
+        function addRandomFish() {
+            const species = ['金鱼', '热带鱼', '小丑鱼', '鲤鱼', '比目鱼'];
+            const randomSpecies = species[Math.floor(Math.random() * species.length)];
+            const randomFish = {
+                species: randomSpecies,
+                confidence: Math.floor(Math.random() * 20) + 80,
+                timestamp: Date.now()
+            };
+            
+            window.tank.addFishToTank(randomFish);
+        }
+
+        function clearTank() {
+            if (confirm('确定要清空鱼缸吗？')) {
+                window.tank.fishes.forEach(fish => {
+                    fish.element.remove();
+                });
+                window.tank.fishes = [];
+                window.tank.updateFishInfo();
+            }
+        }
+
+        function goHome() {
+            window.location.href = 'index.html';
+        }
+
+        // 初始化鱼缸
+        window.addEventListener('DOMContentLoaded', () => {
+            window.tank = new VirtualTank();
+        });
+    </script>
+</body>
+</html>

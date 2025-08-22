@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Draw A Fish - 画鱼游戏</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🐠 Draw A Fish</h1>
+            <p>画一条鱼，看看AI能识别出来吗？</p>
+        </header>
+        
+        <main>
+            <div class="canvas-container">
+                <canvas id="drawingCanvas" width="500" height="400"></canvas>
+            </div>
+            
+            <div class="controls">
+                <div class="brush-controls">
+                    <label for="brushSize">画笔大小:</label>
+                    <input type="range" id="brushSize" min="1" max="20" value="5">
+                    <span id="brushSizeValue">5</span>
+                </div>
+                
+                <div class="color-controls">
+                    <label>颜色:</label>
+                    <div class="color-palette">
+                        <button class="color-btn active" data-color="#000000" style="background: #000000;"></button>
+                        <button class="color-btn" data-color="#ff0000" style="background: #ff0000;"></button>
+                        <button class="color-btn" data-color="#00ff00" style="background: #00ff00;"></button>
+                        <button class="color-btn" data-color="#0000ff" style="background: #0000ff;"></button>
+                        <button class="color-btn" data-color="#ffff00" style="background: #ffff00;"></button>
+                        <button class="color-btn" data-color="#ff00ff" style="background: #ff00ff;"></button>
+                        <button class="color-btn" data-color="#00ffff" style="background: #00ffff;"></button>
+                    </div>
+                </div>
+                
+                <div class="action-controls">
+                    <button id="clearBtn">清除画布</button>
+                    <button id="analyzeBtn">分析鱼类</button>
+                    <button id="saveBtn">保存作品</button>
+                </div>
+                
+                <div class="navigation-controls">
+                    <button class="nav-btn tank-btn" onclick="window.location.href='tank.html'">
+                        🐠 进入鱼缸
+                    </button>
+                    <button class="nav-btn rank-btn" onclick="window.location.href='rank.html'">
+                        🏆 查看排行榜
+                    </button>
+                </div>
+            </div>
+            
+            <div class="result-panel" id="resultPanel">
+                <h3>AI 分析结果</h3>
+                <div id="analysisResult">
+                    <p>画完鱼后点击"分析鱼类"按钮</p>
+                </div>
+                <div id="scoreDisplay">
+                    <span class="score-label">相似度评分:</span>
+                    <span class="score-value" id="scoreValue">--</span>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>使用 HTML5 Canvas + AI 技术实现</p>
+        </footer>
+    </div>
+    
+    <script src="canvas-drawing.js"></script>
+    <script src="ai-analysis.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
